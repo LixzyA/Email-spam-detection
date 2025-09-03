@@ -1,13 +1,17 @@
 import pandas as pd
+from typing import Tuple, List
 import nltk
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import wordnet
+from sklearn.model_selection import train_test_split
+from zenml import step
 nltk.download('stopwords')
 nltk.download('punkt_tab')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger_eng')
+
 
 # Map NLTK POS to WordNet POS
 def get_wordnet_pos(tag):
@@ -22,22 +26,44 @@ def get_wordnet_pos(tag):
     else:
         return wordnet.NOUN
 
-df = pd.read_csv("dataset/spam.csv", encoding='latin1')
-df.rename({'Category':'is_spam', 'Message':'email'}, axis =1, inplace=True)
+@step
+def preprocess_data(data_path:str) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+    df = pd.read_csv(data_path, encoding='latin1')
+    df.rename({'Category':'is_spam', 'Message':'email'}, axis =1, inplace=True)
 
-no_dup_df = df.drop_duplicates(['email'])
-tokens = no_dup_df['email'].apply(word_tokenize)
+    no_dup_df = df.drop_duplicates(['email'])
+    tokens = no_dup_df['email'].apply(word_tokenize)
 
-stop_words = set(stopwords.words('english'))
-filtered_tokens = tokens.apply(lambda tokens: [word for word in tokens if word.lower() not in stop_words])
+    stop_words = set(stopwords.words('english'))
+    filtered_tokens = tokens.apply(lambda tokens: [word for word in tokens if word.lower() not in stop_words])
 
-lemmatizer = WordNetLemmatizer()
-lemmatized_series_pos = filtered_tokens.apply(
-    lambda tokens: [
-        lemmatizer.lemmatize(word, get_wordnet_pos(pos))
-        for word, pos in pos_tag(tokens)
-    ]
-)
-no_dup_df['lemmatized_sent'] = [' '.join(word) for word in lemmatized_series_pos]
-no_dup_df['is_spam'] = no_dup_df['is_spam'].map({'spam': 1, 'ham': 0})
-no_dup_df.to_parquet('dataset/processed.parquet', engine='pyarrow')
+    lemmatizer = WordNetLemmatizer()
+    lemmatized_series_pos = filtered_tokens.apply(
+        lambda tokens: [
+            lemmatizer.lemmatize(word, get_wordnet_pos(pos))
+            for word, pos in pos_tag(tokens)
+        ]
+    )
+    no_dup_df['lemmatized_sent'] = [' '.join(word) for word in lemmatized_series_pos]
+    no_dup_df['is_spam'] = no_dup_df['is_spam'].map({'spam': 1, 'ham': 0})
+    X_train, X_test, y_train, y_test = train_test_split(no_dup_df['lemmatized_sent'], no_dup_df['is_spam'], test_size=0.3)
+    return (X_train, X_test, y_train, y_test)
+# df = pd.read_csv("dataset/spam.csv", encoding='latin1')
+# df.rename({'Category':'is_spam', 'Message':'email'}, axis =1, inplace=True)
+
+# no_dup_df = df.drop_duplicates(['email'])
+# tokens = no_dup_df['email'].apply(word_tokenize)
+
+# stop_words = set(stopwords.words('english'))
+# filtered_tokens = tokens.apply(lambda tokens: [word for word in tokens if word.lower() not in stop_words])
+
+# lemmatizer = WordNetLemmatizer()
+# lemmatized_series_pos = filtered_tokens.apply(
+#     lambda tokens: [
+#         lemmatizer.lemmatize(word, get_wordnet_pos(pos))
+#         for word, pos in pos_tag(tokens)
+#     ]
+# )
+# no_dup_df['lemmatized_sent'] = [' '.join(word) for word in lemmatized_series_pos]
+# no_dup_df['is_spam'] = no_dup_df['is_spam'].map({'spam': 1, 'ham': 0})
+# no_dup_df.to_parquet('dataset/processed.parquet', engine='pyarrow')
