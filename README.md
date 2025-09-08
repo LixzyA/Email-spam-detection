@@ -18,7 +18,7 @@ The project utilizes the `spam.csv` dataset, which contains two primary columns:
 * **Core Libraries:**
     * `pandas`: For data manipulation and analysis.
     * `numpy`: For numerical operations.
-    * `matplotlib` & `seaborn`: For data visualization.
+    * `matplotlib` : For data visualization.
 * **NLP & Machine Learning:**
     * `nltk`: For text preprocessing tasks including:
         * Tokenization (`word_tokenize`, `sent_tokenize`).
