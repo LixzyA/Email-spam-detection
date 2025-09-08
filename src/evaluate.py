@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import joblib
 from zenml import step
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
