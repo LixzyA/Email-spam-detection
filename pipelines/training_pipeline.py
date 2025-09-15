@@ -12,4 +12,4 @@ def pipeline_train(data_path:str):
     df = ingest_data(data_path)
     X_train, X_test, y_train, y_test = preprocess_data(df)
     model, vectorizer = train_model(X_train=X_train, y_train=y_train)
-    evaluate_model(model=model, vectorizer=vectorizer, X_test=X_test, y_test=y_test)
+    acc_score = evaluate_model(model=model, vectorizer=vectorizer, X_test=X_test, y_test=y_test)
