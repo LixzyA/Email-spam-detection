@@ -5,14 +5,16 @@ from zenml.client import Client
 from sklearn.base import ClassifierMixin
 from sklearn.feature_extraction.text import CountVectorizer
 from typing import Tuple
-# import mlflow
+import mlflow
 import logging
 
-@step
+experiment_tracker = Client().active_stack.experiment_tracker
+
+@step(experiment_tracker=experiment_tracker.name)
 def train_model(X_train: pd.Series, y_train: pd.Series) -> Tuple[ClassifierMixin, CountVectorizer]:
     """ Train an SVM model with the provided training data. """
     try:
-        # mlflow.sklearn.autolog()
+        mlflow.sklearn.autolog()
         trainer = SVMTrainer()
         model, vectorizer = trainer.train(X_train, y_train)
         return model, vectorizer
