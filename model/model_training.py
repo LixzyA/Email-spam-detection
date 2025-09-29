@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
-from typing import Tuple
+from sklearn.pipeline import make_pipeline, Pipeline
 
 class ModelTrainer(ABC):
     """
@@ -15,12 +15,11 @@ class SVMTrainer(ModelTrainer):
     """
     Concrete implementation of ModelTrainer using Support Vector Machine.
     """
-    def train(self, X_train, y_train) -> Tuple[SVC, CountVectorizer]:
+    def train(self, X_train, y_train) -> Pipeline:
         """ Train an SVM model with the provided training data. """
-        vectorizer = CountVectorizer()
-        X_train = vectorizer.fit_transform(X_train)
-
-        model = SVC(probability=True)
-        model.fit(X_train, y_train)
-
-        return (model, vectorizer)
+        pipeline = make_pipeline(
+            ("Vectorizer", CountVectorizer()),
+            ("Model", SVC(probability=True))
+        )
+        pipeline.fit()
+        return pipeline
