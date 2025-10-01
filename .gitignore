@@ -1,5 +1,5 @@
 venv/
-.venv/
+linux-venv/
 artifacts/
 .zen/
 __pycache__/
