@@ -16,7 +16,7 @@ from zenml.integrations.mlflow.model_deployers.mlflow_model_deployer import (
 )
 from zenml.integrations.mlflow.services import MLFlowDeploymentService
 from zenml.integrations.mlflow.steps import mlflow_model_deployer_step
-from zenml.steps import BaseParameters
+from pydantic import BaseModel
 from .utils import get_data_for_test
 
 docker_settings = DockerSettings(required_integrations=[MLFLOW, SKLEARN])
@@ -29,7 +29,7 @@ def dynamic_importer() -> str:
     data = get_data_for_test()
     return data
 
-class DeploymentTriggerConfig(BaseParameters):
+class DeploymentTriggerConfig(BaseModel):
     '''Parameteres for triggering the deployment'''
     min_acc: float = 0.9
 
@@ -44,7 +44,7 @@ def deployment_trigger(
     '''
     return accuracy > config.min_acc
 
-class MLFlowDeploymentLoaderStepParameters(BaseParameters):
+class MLFlowDeploymentLoaderStepParameters(BaseModel):
     """
     MLFlow deployment parameters
 
@@ -111,10 +111,10 @@ def continuous_deployment_pipeline(
     X_train, X_test, y_train, y_test = preprocess_data(df)
     pipeline = train_model(X_train=X_train, y_train=y_train)
     acc_score = evaluate_model(pipeline=pipeline, X_test=X_test, y_test=y_test)
-    deployment_decision = deployment_trigger(acc_score)
+    deployment_decision = deployment_trigger(acc_score, config = DeploymentTriggerConfig())
     mlflow_model_deployer_step(
         model = pipeline,
-        deployment_decision= deployment_decision,
+        deploy_decision= deployment_decision,
         workers=workers,
         timeout=timeout
     )
@@ -126,8 +126,11 @@ def inference_pipeline(
 ):
     batch_data = dynamic_importer()
     model_deployment_service = prediction_service_loader(
-        pipeline_name=pipeline_name,
-        pipeline_step_name=pipeline_step_name,
-        running=False,
+        MLFlowDeploymentLoaderStepParameters(
+            pipeline_name=pipeline_name,
+            step_name=pipeline_step_name,
+            model_name="model",
+            running=False,
+        )  
     )
     predictor(service=model_deployment_service, data=batch_data)
