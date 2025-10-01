@@ -18,8 +18,8 @@ class SVMTrainer(ModelTrainer):
     def train(self, X_train, y_train) -> Pipeline:
         """ Train an SVM model with the provided training data. """
         pipeline = make_pipeline(
-            ("Vectorizer", CountVectorizer()),
-            ("Model", SVC(probability=True))
+             CountVectorizer(),
+            SVC(probability=True)
         )
-        pipeline.fit()
+        pipeline.fit(X_train, y_train)
         return pipeline
